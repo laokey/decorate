@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>筑境 · 家装内容工作台</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-mark"><span>筑</span></div>
+        <div class="brand-copy"><strong>筑境</strong><small>家装内容工作台</small></div>
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="new"><span>✦</span> 新建宣传视频</button>
+          <button class="nav-item" data-view="history"><span>▣</span> 项目历史</button>
+          <button class="nav-item" data-view="assets"><span>◈</span> 素材库</button>
+          <button class="nav-item" data-view="settings"><span>⚙</span> 门店设置</button>
+        </nav>
+        <div class="sidebar-note">
+          <span class="note-dot"></span>
+          <div><strong>智能顾问在线</strong><p>素材和脚本都在本地处理</p></div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div><p class="eyebrow">CONTENT STUDIO / 01</p><h1>新建宣传视频</h1></div>
+          <div class="top-actions"><span class="save-state">● 已自动保存</span><button class="icon-button" title="帮助">?</button><div class="avatar">林</div></div>
+        </header>
+
+        <div class="content-grid">
+          <section class="editor-panel">
+            <div class="step-row"><span class="step active">01</span><span class="step-line"></span><span class="step">02</span><span class="step-line"></span><span class="step">03</span><span class="step-label">视频设定</span></div>
+            <div class="section-heading"><div><p class="eyebrow">YOUR BRIEF</p><h2>告诉我这次想宣传什么</h2></div><span class="required">AI 顾问</span></div>
+
+            <form id="brief-form">
+              <label class="field-label" for="brief">宣传需求 <span>*</span></label>
+              <textarea id="brief" rows="4" placeholder="例如：做一条真实有质感的开工视频，突出我们施工透明、预算清晰，面向第一次装修的新婚家庭。">做一条真实有质感的开工视频，突出施工透明、预算清晰，面向第一次装修的新婚家庭。</textarea>
+              <div class="hint-row"><span>建议描述目标客户、风格和想强调的优势</span><span id="char-count">0 / 200</span></div>
+
+              <div class="two-col">
+                <div><label class="field-label" for="platform">发布平台</label><select id="platform"><option>抖音 / 视频号（竖屏）</option><option>小红书（竖屏）</option><option>朋友圈（横屏）</option></select></div>
+                <div><label class="field-label" for="duration">视频时长</label><select id="duration"><option value="30">30 秒</option><option value="15">15 秒</option><option value="60">60 秒</option></select></div>
+              </div>
+
+              <label class="field-label">内容风格</label>
+              <div class="style-grid" id="style-grid">
+                <button type="button" class="style-card selected" data-style="真实纪录"><span class="style-image image-documentary"></span><strong>真实纪录</strong><small>自然、有信任感</small><i>✓</i></button>
+                <button type="button" class="style-card" data-style="专业顾问"><span class="style-image image-consultant"></span><strong>专业顾问</strong><small>清晰、有说服力</small><i>✓</i></button>
+                <button type="button" class="style-card" data-style="轻促销"><span class="style-image image-promo"></span><strong>轻促销</strong><small>利落、有行动力</small><i>✓</i></button>
+              </div>
+
+              <div class="upload-head"><label class="field-label">上传装修素材</label><span>支持 MP4 / MOV，单个不超过 500 MB</span></div>
+              <label class="upload-zone" for="video-files"><input id="video-files" type="file" accept="video/mp4,video/quicktime,video/*" multiple /><span class="upload-icon">↑</span><strong>拖入视频，或点击上传</strong><small>建议上传开工、施工、设计师出镜等片段</small></label>
+              <div id="file-list" class="file-list"></div>
+              <p class="upload-order-hint">拖动素材卡片可调整顺序，成片会按此顺序拼接</p>
+
+              <div class="brand-row"><div><label class="field-label" for="brand">门店名称</label><input id="brand" value="筑境整装" /></div><div><label class="field-label" for="contact">联系方式</label><input id="contact" value="到店领取装修预算清单" /></div></div>
+              <button class="primary-button" type="submit"><span>✦</span> 生成视频方案 <b>⌘ ↵</b></button>
+            </form>
+          </section>
+
+          <section class="preview-panel">
+            <div class="preview-top"><div><p class="eyebrow">LIVE PREVIEW</p><h2>方案预览</h2></div><span class="status-pill" id="status-pill">等待生成</span></div>
+            <div class="phone-frame"><div class="phone-screen" id="phone-screen"><div class="screen-placeholder"><div class="play-orb">✦</div><strong>你的成片预览<br />会出现在这里</strong><small>上传素材后生成方案</small></div></div><div class="phone-home"></div></div>
+            <div class="preview-meta"><div><span>当前项目</span><strong id="project-name">新建 · 真实纪录</strong></div><button class="round-button" title="全屏预览">↗</button></div>
+            <div class="result-card" id="result-card"><div class="result-title"><span class="spark">✦</span><div><strong>AI 家装顾问</strong><small>准备好帮你讲好这次装修</small></div></div><div class="result-empty">填写左侧需求并上传素材<br />我会生成脚本、分镜和剪辑建议</div></div>
+            <button class="secondary-button" id="download-button" disabled>↓ 导出视频方案</button>
+            <button class="primary-button render-button" id="render-button" disabled>▶ 生成 MP4 成片</button>
+          </section>
+        </div>
+        <section class="management-view" id="history-view"><div class="view-heading"><div><p class="eyebrow">PROJECT ARCHIVE</p><h2>项目历史</h2></div><button class="secondary-button compact" id="refresh-history">↻ 刷新</button></div><div class="table-wrap" id="history-list"><div class="empty-view">正在读取项目...</div></div></section>
+        <section class="management-view" id="assets-view"><div class="view-heading"><div><p class="eyebrow">MEDIA LIBRARY</p><h2>素材库</h2></div><span class="view-count" id="asset-count">0 个素材</span></div><div class="asset-grid" id="asset-list"><div class="empty-view">正在读取素材...</div></div></section>
+        <section class="management-view" id="settings-view"><div class="view-heading"><div><p class="eyebrow">STORE PROFILE</p><h2>门店设置</h2></div></div><form class="settings-form" id="settings-form"><div class="settings-card"><label class="field-label">门店名称<input name="brand" /></label><label class="field-label">联系电话<input name="phone" placeholder="例如 400-123-4567" /></label><label class="field-label">门店地址<input name="address" /></label><label class="field-label">服务区域<input name="serviceArea" placeholder="例如：杭州市主城区" /></label><label class="field-label">默认联系方式<input name="contact" /></label><div class="two-col"><label class="field-label">默认风格<select name="defaultStyle"><option>真实纪录</option><option>专业顾问</option><option>轻促销</option></select></label><label class="field-label">默认时长<select name="defaultDuration"><option value="15">15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select></label></div><button class="primary-button" type="submit">保存门店设置</button></div></form></section>
+      </section>
+    </main>
+    <div class="toast" id="toast"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
