@@ -21,7 +21,7 @@ npm start
 
 ## 接入大模型
 
-复制 `.env.example` 为 `.env`，填写 `LLM_API_KEY`、`LLM_BASE_URL` 和 `LLM_MODEL`。服务会调用 OpenAI 兼容的 `/chat/completions` 接口；没有 Key 时使用本地规则引擎，方便先验证产品流程。
+复制 `.env.example` 为 `.env`，填写真实的 ASCII 格式 `LLM_API_KEY`、`LLM_BASE_URL` 和 `LLM_MODEL`。不要把 `你的模型API_KEY` 之类的中文说明直接写进变量；服务会调用 OpenAI 兼容的 `/chat/completions` 接口。没有有效 Key 时会自动使用本地规则引擎，方便先验证产品流程。
 
 ## 当前边界
 
@@ -29,4 +29,4 @@ npm start
 
 ## 视频渲染
 
-渲染接口已接入 `renderer.js`。本机需要安装 FFmpeg，并确保 `ffmpeg` 在 PATH 中，或在 `.env` 中设置 `FFMPEG_PATH`。当前渲染会把项目上传素材按顺序拼接为 1080x1920 竖屏视频。不同 FFmpeg 构建版的滤镜能力不同，因此品牌字幕目前由前端预览负责；生产环境可再接入带 `drawtext` 的 FFmpeg 构建版或预生成字幕图层。
+渲染接口已接入 `renderer.js`。本机需要安装 FFmpeg，并确保 `ffmpeg` 在 PATH 中，或在 `.env` 中设置 `FFMPEG_PATH`。CentOS 服务器需要配置 `TTS_API_KEY` 或复用 `LLM_API_KEY`，并使用百炼 CosyVoice 生成旁白；本地 Mac 才会备用系统 `say`。当前渲染会把项目上传素材按顺序拼接为 1080x1920 竖屏视频。

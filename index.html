@@ -42,8 +42,9 @@
 
               <div class="two-col">
                 <div><label class="field-label" for="platform">发布平台</label><select id="platform"><option>抖音 / 视频号（竖屏）</option><option>小红书（竖屏）</option><option>朋友圈（横屏）</option></select></div>
-                <div><label class="field-label" for="duration">视频时长</label><select id="duration"><option value="30">30 秒</option><option value="15">15 秒</option><option value="60">60 秒</option></select></div>
+                <div><label class="field-label">视频时长</label><div class="duration-auto"><span>自动识别</span><strong id="duration-value">上传后计算</strong></div></div>
               </div>
+              <div class="two-col"><div><label class="field-label" for="voice">旁白音色</label><div class="voice-select"><select id="voice"><option value="longanyang">通用女声 · 温柔自然</option><option value="longxiaochun">通用女声 · 清晰亲切</option><option value="longshuo">通用男声 · 稳重专业</option></select><button type="button" id="voice-preview" title="试听当前音色">▶ 试听</button></div></div><div><label class="field-label" for="subtitle-style">字幕样式</label><select id="subtitle-style"><option value="clean">清爽白字</option><option value="strong">醒目黑底</option><option value="warm">暖色重点</option></select></div></div>
 
               <label class="field-label">内容风格</label>
               <div class="style-grid" id="style-grid">
@@ -65,6 +66,7 @@
           <section class="preview-panel">
             <div class="preview-top"><div><p class="eyebrow">LIVE PREVIEW</p><h2>方案预览</h2></div><span class="status-pill" id="status-pill">等待生成</span></div>
             <div class="phone-frame"><div class="phone-screen" id="phone-screen"><div class="screen-placeholder"><div class="play-orb">✦</div><strong>你的成片预览<br />会出现在这里</strong><small>上传素材后生成方案</small></div></div><div class="phone-home"></div></div>
+            <p class="preview-note">预览会同步展示所选字幕样式；最终视频字幕轨可在播放器中打开。</p>
             <div class="preview-meta"><div><span>当前项目</span><strong id="project-name">新建 · 真实纪录</strong></div><button class="round-button" title="全屏预览">↗</button></div>
             <div class="result-card" id="result-card"><div class="result-title"><span class="spark">✦</span><div><strong>AI 家装顾问</strong><small>准备好帮你讲好这次装修</small></div></div><div class="result-empty">填写左侧需求并上传素材<br />我会生成脚本、分镜和剪辑建议</div></div>
             <button class="secondary-button" id="download-button" disabled>↓ 导出视频方案</button>
@@ -76,6 +78,7 @@
         <section class="management-view" id="settings-view"><div class="view-heading"><div><p class="eyebrow">STORE PROFILE</p><h2>门店设置</h2></div></div><form class="settings-form" id="settings-form"><div class="settings-card"><label class="field-label">门店名称<input name="brand" /></label><label class="field-label">联系电话<input name="phone" placeholder="例如 400-123-4567" /></label><label class="field-label">门店地址<input name="address" /></label><label class="field-label">服务区域<input name="serviceArea" placeholder="例如：杭州市主城区" /></label><label class="field-label">默认联系方式<input name="contact" /></label><div class="two-col"><label class="field-label">默认风格<select name="defaultStyle"><option>真实纪录</option><option>专业顾问</option><option>轻促销</option></select></label><label class="field-label">默认时长<select name="defaultDuration"><option value="15">15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option></select></label></div><button class="primary-button" type="submit">保存门店设置</button></div></form></section>
       </section>
     </main>
+    <div class="task-overlay" id="task-overlay" aria-hidden="true"><div class="task-dialog"><div class="task-spinner"></div><p class="eyebrow">AI CONTENT ENGINE</p><h3 id="task-title">正在生成</h3><p id="task-message">正在分析你的需求...</p><div class="task-progress"><span id="task-progress-bar"></span></div><div class="task-steps"><span class="active" id="task-step-1">需求分析</span><span id="task-step-2">脚本与分镜</span><span id="task-step-3">保存素材</span></div><button id="task-cancel" class="task-cancel" type="button">后台继续处理</button></div></div>
     <div class="toast" id="toast"></div>
     <script src="app.js"></script>
   </body>

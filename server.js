@@ -2,10 +2,24 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { renderProject } from './renderer.js';
+import { renderProject, createNarration } from './renderer.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+async function loadEnvFile() {
+  try {
+    const contents = await fs.readFile(path.join(root, '.env'), 'utf8');
+    for (const line of contents.split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!match || match[1].startsWith('#') || process.env[match[1]]) continue;
+      process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+await loadEnvFile();
 const dataDir = path.join(root, 'data');
 const uploadDir = path.join(dataDir, 'uploads');
 const projectDir = path.join(dataDir, 'projects');
@@ -40,6 +54,17 @@ function readBody(req) {
 
 function safeName(name) { return String(name || 'video').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100); }
 function makeHook(style) { return style === '专业顾问' ? '装修别只看效果，更要看每一步是否说得清楚。' : style === '轻促销' ? '正在装修的朋友，这份开工攻略建议先收藏。' : '第一次装修，最怕开工之后才发现预算不够。'; }
+function hasUsableApiKey() {
+  const key = String(process.env.LLM_API_KEY || '').trim();
+  return Boolean(key) && /^[\x21-\x7e]+$/.test(key) && !/你的|your[_ -]?api|changeme|replace/i.test(key);
+}
+
+async function probeDuration(filePath) {
+  const child = await new Promise((resolve, reject) => {
+    execFile(process.env.FFPROBE_PATH || 'ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', filePath], (error, stdout) => error ? reject(error) : resolve(Number(stdout.trim())));
+  });
+  return Number.isFinite(child) ? child : 0;
+}
 
 function localPlan(input, files) {
   const brand = input.brand || '你的装修门店';
@@ -63,7 +88,7 @@ function localPlan(input, files) {
 }
 
 async function generateWithLLM(input, files) {
-  if (!process.env.LLM_API_KEY) return localPlan(input, files);
+  if (!hasUsableApiKey()) return localPlan(input, files);
   const prompt = `你是本地装修门店的家装营销顾问。根据以下信息生成严格 JSON，不要 Markdown：${JSON.stringify({ ...input, files: files.map((file) => file.name) })}。JSON 字段必须包含 title,duration,aspectRatio,style,hook,voiceover,cta,scenes,assetPlan,music。scenes 是包含 order,seconds,title,copy,assetTags 的数组。不得虚构案例、价格或客户评价，不得把网络素材冒充本店案例。`;
   const response = await fetch(`${process.env.LLM_BASE_URL || 'https://api.openai.com/v1'}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.LLM_API_KEY}` }, body: JSON.stringify({ model: process.env.LLM_MODEL || 'gpt-4o-mini', temperature: 0.7, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: '输出真实、合规、适合短视频获客的装修宣传方案。' }, { role: 'user', content: prompt }] }) });
   if (!response.ok) throw new Error(`LLM 请求失败: ${response.status}`);
@@ -86,9 +111,11 @@ async function saveFiles(files = []) {
 
 async function createProject(input) {
   const files = await saveFiles(input.files);
-  const plan = await generateWithLLM(input, files);
+  const durations = await Promise.all(files.map((file) => probeDuration(path.resolve(root, file.path)).catch(() => 0)));
+  const actualDuration = Math.max(1, Math.round(durations.reduce((sum, value) => sum + value, 0)));
+  const plan = await generateWithLLM({ ...input, duration: actualDuration }, files);
   const id = crypto.randomUUID();
-  const project = { id, createdAt: new Date().toISOString(), brief: input.brief || '', brand: input.brand || '', contact: input.contact || '', platform: input.platform || '', ...plan, files };
+  const project = { id, createdAt: new Date().toISOString(), brief: input.brief || '', brand: input.brand || '', contact: input.contact || '', platform: input.platform || '', voice: input.voice || 'longanyang', subtitleStyle: input.subtitleStyle || 'clean', duration: actualDuration, ...plan, files };
   await fs.writeFile(path.join(projectDir, `${id}.json`), JSON.stringify(project, null, 2));
   return project;
 }
@@ -100,7 +127,7 @@ async function readSettings() {
 async function route(req, res) {
   if (req.method === 'OPTIONS') { res.writeHead(204, headers); res.end(); return; }
   const url = new URL(req.url, `http://${req.headers.host}`);
-  if (req.method === 'GET' && url.pathname === '/api/health') { send(res, 200, { ok: true, service: 'zujing-content-studio', ai: Boolean(process.env.LLM_API_KEY) }); return; }
+  if (req.method === 'GET' && url.pathname === '/api/health') { send(res, 200, { ok: true, service: 'zujing-content-studio', ai: hasUsableApiKey(), mode: hasUsableApiKey() ? 'llm' : 'local' }); return; }
   if (req.method === 'GET' && url.pathname === '/api/projects') {
     const files = await fs.readdir(projectDir); const projects = await Promise.all(files.filter((name) => name.endsWith('.json')).map(async (name) => JSON.parse(await fs.readFile(path.join(projectDir, name), 'utf8'))));
     projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); send(res, 200, projects.map((project) => ({ id: project.id, title: project.title, brand: project.brand, style: project.style, duration: project.duration, createdAt: project.createdAt, render: project.render || null, files: project.files?.length || 0 })));
@@ -127,6 +154,16 @@ async function route(req, res) {
   }
   if (req.method === 'POST' && url.pathname === '/api/projects') {
     try { const project = await createProject(await readBody(req)); send(res, 201, project); } catch (err) { error(res, 400, err.message); }
+    return;
+  }
+  if (req.method === 'PUT' && /^\/api\/projects\/[^/]+$/.test(url.pathname)) {
+    const id = path.basename(url.pathname);
+    try { const current = JSON.parse(await fs.readFile(path.join(projectDir, `${id}.json`), 'utf8')); const changes = await readBody(req); const project = { ...current, hook: String(changes.hook ?? current.hook), voiceover: String(changes.voiceover ?? current.voiceover), cta: String(changes.cta ?? current.cta), voice: changes.voice || current.voice, subtitleStyle: changes.subtitleStyle || current.subtitleStyle, updatedAt: new Date().toISOString() }; await fs.writeFile(path.join(projectDir, `${id}.json`), JSON.stringify(project, null, 2)); send(res, 200, project); } catch (err) { error(res, 404, err.message); }
+    return;
+  }
+  if (req.method === 'POST' && url.pathname === '/api/tts/preview') {
+    const id = crypto.randomUUID(); const audioPath = path.join(outputDir, `tts-${id}.wav`);
+    try { const input = await readBody(req); await createNarration({ hook: '', voiceover: input.text || '这是旁白试听。', cta: '', voice: input.voice || 'longanyang' }, audioPath); const audio = await fs.readFile(audioPath); send(res, 200, { audio: `data:audio/wav;base64,${audio.toString('base64')}` }); } catch (err) { error(res, 422, err.message); } finally { await fs.rm(audioPath, { force: true }); }
     return;
   }
   if (req.method === 'PUT' && url.pathname === '/api/settings') { try { const settings = await readBody(req); await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2)); send(res, 200, settings); } catch (err) { error(res, 400, err.message); } return; }
