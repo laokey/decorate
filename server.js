@@ -60,10 +60,16 @@ function hasUsableApiKey() {
 }
 
 async function probeDuration(filePath) {
-  const child = await new Promise((resolve, reject) => {
-    execFile(process.env.FFPROBE_PATH || 'ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', filePath], (error, stdout) => error ? reject(error) : resolve(Number(stdout.trim())));
-  });
-  return Number.isFinite(child) ? child : 0;
+  try {
+    const duration = await new Promise((resolve, reject) => execFile(process.env.FFPROBE_PATH || 'ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', filePath], (error, stdout) => error ? reject(error) : resolve(Number(stdout.trim()))));
+    return Number.isFinite(duration) ? duration : 0;
+  } catch {
+    try {
+      const output = await new Promise((resolve, reject) => execFile(process.env.FFMPEG_PATH || 'ffmpeg', ['-hide_banner', '-i', filePath, '-f', 'null', '-'], { maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => error && !stderr ? reject(error) : resolve(stderr || stdout)));
+      const match = String(output).match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/);
+      return match ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]) : 0;
+    } catch { return 0; }
+  }
 }
 
 function localPlan(input, files) {
